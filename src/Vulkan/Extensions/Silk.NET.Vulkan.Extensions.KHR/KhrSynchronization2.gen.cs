@@ -26,7 +26,7 @@ namespace Silk.NET.Vulkan.Extensions.KHR
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdPipelineBarrier2KHR", Convention = CallingConvention.Winapi)]
-        public partial void CmdPipelineBarrier2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0), Flow(Silk.NET.Core.Native.FlowDirection.In)] in DependencyInfo pDependencyInfo);
+        public partial void CmdPipelineBarrier2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in DependencyInfo pDependencyInfo);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdResetEvent2KHR", Convention = CallingConvention.Winapi)]
@@ -38,7 +38,7 @@ namespace Silk.NET.Vulkan.Extensions.KHR
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdSetEvent2KHR", Convention = CallingConvention.Winapi)]
-        public partial void CmdSetEvent2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] Event @event, [Count(Count = 0), Flow(Silk.NET.Core.Native.FlowDirection.In)] in DependencyInfo pDependencyInfo);
+        public partial void CmdSetEvent2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] Event @event, [Count(Count = 0), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in DependencyInfo pDependencyInfo);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdWaitEvents2KHR", Convention = CallingConvention.Winapi)]
@@ -46,41 +46,19 @@ namespace Silk.NET.Vulkan.Extensions.KHR
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdWaitEvents2KHR", Convention = CallingConvention.Winapi)]
-        public unsafe partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] Event* pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] in DependencyInfo pDependencyInfos);
+        public unsafe partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] Event* pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in DependencyInfo pDependencyInfos);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdWaitEvents2KHR", Convention = CallingConvention.Winapi)]
-        public unsafe partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] in Event pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] DependencyInfo* pDependencyInfos);
+        public unsafe partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in Event pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] DependencyInfo* pDependencyInfos);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdWaitEvents2KHR", Convention = CallingConvention.Winapi)]
-        public partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] in Event pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] in DependencyInfo pDependencyInfos);
-
-        /// <summary>To be documented.</summary>
-        [NativeApi(EntryPoint = "vkCmdWriteBufferMarker2AMD", Convention = CallingConvention.Winapi)]
-        public partial void CmdWriteBufferMarker2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] PipelineStageFlags2 stage, [Count(Count = 0)] Buffer dstBuffer, [Count(Count = 0)] ulong dstOffset, [Count(Count = 0)] uint marker);
+        public partial void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] uint eventCount, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in Event pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in DependencyInfo pDependencyInfos);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkCmdWriteTimestamp2KHR", Convention = CallingConvention.Winapi)]
         public partial void CmdWriteTimestamp2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Count = 0)] PipelineStageFlags2 stage, [Count(Count = 0)] QueryPool queryPool, [Count(Count = 0)] uint query);
-
-        /// <summary>To be documented.</summary>
-        [NativeApi(EntryPoint = "vkGetQueueCheckpointData2NV", Convention = CallingConvention.Winapi)]
-        public unsafe partial void GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] uint* pCheckpointDataCount, [Count(Parameter = "pCheckpointDataCount"), Flow(Silk.NET.Core.Native.FlowDirection.Out)] CheckpointData2NV* pCheckpointData);
-
-        /// <summary>To be documented.</summary>
-        [Inject(SilkTouchStage.Begin, "pCheckpointData = new(StructureType.CheckpointData2NV);")]
-        [NativeApi(EntryPoint = "vkGetQueueCheckpointData2NV", Convention = CallingConvention.Winapi)]
-        public unsafe partial void GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] uint* pCheckpointDataCount, [Count(Parameter = "pCheckpointDataCount"), Flow(Silk.NET.Core.Native.FlowDirection.Out)] out CheckpointData2NV pCheckpointData);
-
-        /// <summary>To be documented.</summary>
-        [NativeApi(EntryPoint = "vkGetQueueCheckpointData2NV", Convention = CallingConvention.Winapi)]
-        public unsafe partial void GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] ref uint pCheckpointDataCount, [Count(Parameter = "pCheckpointDataCount"), Flow(Silk.NET.Core.Native.FlowDirection.Out)] CheckpointData2NV* pCheckpointData);
-
-        /// <summary>To be documented.</summary>
-        [Inject(SilkTouchStage.Begin, "pCheckpointData = new(StructureType.CheckpointData2NV);")]
-        [NativeApi(EntryPoint = "vkGetQueueCheckpointData2NV", Convention = CallingConvention.Winapi)]
-        public partial void GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] ref uint pCheckpointDataCount, [Count(Parameter = "pCheckpointDataCount"), Flow(Silk.NET.Core.Native.FlowDirection.Out)] out CheckpointData2NV pCheckpointData);
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkQueueSubmit2KHR", Convention = CallingConvention.Winapi)]
@@ -88,7 +66,7 @@ namespace Silk.NET.Vulkan.Extensions.KHR
 
         /// <summary>To be documented.</summary>
         [NativeApi(EntryPoint = "vkQueueSubmit2KHR", Convention = CallingConvention.Winapi)]
-        public partial Result QueueSubmit2([Count(Count = 0)] Queue queue, [Count(Count = 0)] uint submitCount, [Count(Parameter = "submitCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] in SubmitInfo2 pSubmits, [Count(Count = 0)] Fence fence);
+        public partial Result QueueSubmit2([Count(Count = 0)] Queue queue, [Count(Count = 0)] uint submitCount, [Count(Parameter = "submitCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] [RequiresLocation] in SubmitInfo2 pSubmits, [Count(Count = 0)] Fence fence);
 
         /// <summary>To be documented.</summary>
         public unsafe void CmdWaitEvents2([Count(Count = 0)] CommandBuffer commandBuffer, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] Event* pEvents, [Count(Parameter = "eventCount"), Flow(Silk.NET.Core.Native.FlowDirection.In)] ReadOnlySpan<DependencyInfo> pDependencyInfos)
@@ -116,24 +94,6 @@ namespace Silk.NET.Vulkan.Extensions.KHR
         {
             // ImplicitCountSpanOverloader
             return QueueSubmit2(queue, (uint) pSubmits.Length, in pSubmits.GetPinnableReference(), fence);
-        }
-
-        /// <summary>To be documented.</summary>
-        [Inject(SilkTouchStage.Begin, "pCheckpointData = new(StructureType.CheckpointData2NV);")]
-        public unsafe CheckpointData2NV GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] uint* pCheckpointDataCount)
-        {
-            // NonKhrReturnTypeOverloader
-            GetQueueCheckpointData2(queue, pCheckpointDataCount, out CheckpointData2NV silkRet);
-            return silkRet;
-        }
-
-        /// <summary>To be documented.</summary>
-        [Inject(SilkTouchStage.Begin, "pCheckpointData = new(StructureType.CheckpointData2NV);")]
-        public unsafe CheckpointData2NV GetQueueCheckpointData2([Count(Count = 0)] Queue queue, [Count(Count = 0)] ref uint pCheckpointDataCount)
-        {
-            // NonKhrReturnTypeOverloader
-            GetQueueCheckpointData2(queue, ref pCheckpointDataCount, out CheckpointData2NV silkRet);
-            return silkRet;
         }
 
         public KhrSynchronization2(INativeContext ctx)

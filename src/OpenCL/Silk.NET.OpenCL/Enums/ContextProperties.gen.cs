@@ -16,6 +16,8 @@ namespace Silk.NET.OpenCL
         Platform = 0x1084,
         [NativeName("Name", "CL_CONTEXT_INTEROP_USER_SYNC")]
         InteropUserSync = 0x1085,
+        [NativeName("Name", "CL_CONTEXT_MEMORY_INITIALIZE_KHR")]
+        MemoryInitializeKhr = 0x2030,
         [NativeName("Name", "CL_CONTEXT_TERMINATE_KHR")]
         TerminateKhr = 0x2032,
         [NativeName("Name", "CL_PRINTF_CALLBACK_ARM")]
@@ -24,13 +26,5 @@ namespace Silk.NET.OpenCL
         PrintfBuffersizeArm = 0x40B1,
         [NativeName("Name", "CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL")]
         ShowDiagnosticsIntel = 0x4106,
-        [NativeName("Name", "CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL")]
-        DiagnosticsLevelAllIntel = 0xFF,
-        [NativeName("Name", "CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL")]
-        DiagnosticsLevelGoodIntel = 0x1,
-        [NativeName("Name", "CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL")]
-        DiagnosticsLevelBadIntel = 0x2,
-        [NativeName("Name", "CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL")]
-        DiagnosticsLevelNeutralIntel = 0x4,
     }
 }

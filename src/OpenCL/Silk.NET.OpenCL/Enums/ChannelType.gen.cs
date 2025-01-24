@@ -44,5 +44,13 @@ namespace Silk.NET.OpenCL
         Float = 0x10DE,
         [NativeName("Name", "CL_UNORM_INT_101010_2")]
         UnormInt1010102 = 0x10E0,
+        [NativeName("Name", "CL_UNORM_INT24")]
+        UnormInt24 = 0x10DF,
+        [NativeName("Name", "CL_UNSIGNED_INT_RAW10_EXT")]
+        UnsignedIntRaw10Ext = 0x10E3,
+        [NativeName("Name", "CL_UNSIGNED_INT_RAW12_EXT")]
+        UnsignedIntRaw12Ext = 0x10E4,
+        [NativeName("Name", "CL_UNORM_INT_2_101010_EXT")]
+        UnormInt2101010Ext = 0x10E5,
     }
 }
