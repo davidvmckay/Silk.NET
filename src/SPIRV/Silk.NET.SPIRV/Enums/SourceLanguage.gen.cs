@@ -32,6 +32,12 @@ namespace Silk.NET.SPIRV
         HeroC = 0x8,
         [NativeName("Name", "SpvSourceLanguageNZSL")]
         Nzsl = 0x9,
+        [NativeName("Name", "SpvSourceLanguageWGSL")]
+        Wgsl = 0xA,
+        [NativeName("Name", "SpvSourceLanguageSlang")]
+        Slang = 0xB,
+        [NativeName("Name", "SpvSourceLanguageZig")]
+        Zig = 0xC,
         [NativeName("Name", "SpvSourceLanguageMax")]
         Max = 0x7FFFFFFF,
     }

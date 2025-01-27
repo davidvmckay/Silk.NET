@@ -113,6 +113,12 @@ namespace Silk.NET.OpenCL.Extensions.EXT
         MigrateMemObjectHost = 0x1,
         [NativeName("Name", "CL_MIGRATE_MEM_OBJECT_HOST_EXT")]
         MigrateMemObjectHostExt = 0x1,
+        [NativeName("Name", "CL_UNSIGNED_INT_RAW10_EXT")]
+        UnsignedIntRaw10Ext = 0x10E3,
+        [NativeName("Name", "CL_UNSIGNED_INT_RAW12_EXT")]
+        UnsignedIntRaw12Ext = 0x10E4,
+        [NativeName("Name", "CL_UNORM_INT_2_101010_EXT")]
+        UnormInt2101010Ext = 0x10E5,
         [NativeName("Name", "CL_COMMAND_MIGRATE_MEM_OBJECT_EXT")]
         MigrateMemObjectExt = 0x4040,
         [NativeName("Name", "CL_COMMAND_MIGRATE_MEM_OBJECT_EXT")]

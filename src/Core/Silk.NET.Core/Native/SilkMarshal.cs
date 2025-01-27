@@ -144,7 +144,8 @@ namespace Silk.NET.Core.Native
                 NativeStringEncoding.BStr => -1,
                 NativeStringEncoding.LPStr or NativeStringEncoding.LPTStr or NativeStringEncoding.LPUTF8Str
                     => (input is null ? 0 : Encoding.UTF8.GetMaxByteCount(input.Length)) + 1,
-                NativeStringEncoding.LPWStr => ((input?.Length ?? 0) + 1) * 2,
+                NativeStringEncoding.LPWStr when RuntimeInformation.IsOSPlatform(OSPlatform.Windows) => ((input?.Length ?? 0) + 1) * 2,
+                NativeStringEncoding.LPWStr => ((input?.Length ?? 0) + 1) * 4,
                 _ => -1
             };
 
@@ -188,28 +189,37 @@ namespace Silk.NET.Core.Native
                     int convertedBytes;
 
                     fixed (char* firstChar = input)
+                    fixed (byte* bytes = span)
                     {
-                        fixed (byte* bytes = span)
-                        {
-                            convertedBytes = Encoding.UTF8.GetBytes(firstChar, input.Length, bytes, span.Length - 1);
-                        }
+                        convertedBytes = Encoding.UTF8.GetBytes(firstChar, input.Length, bytes, span.Length - 1);
+                        bytes[convertedBytes] = 0;
                     }
 
-                    span[convertedBytes] = 0;
-                    return ++convertedBytes;
+                    return convertedBytes + 1;
                 }
-                case NativeStringEncoding.LPWStr:
+                case NativeStringEncoding.LPWStr when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
                 {
                     fixed (char* firstChar = input)
+                    fixed (byte* bytes = span)
                     {
-                        fixed (byte* bytes = span)
-                        {
-                            Buffer.MemoryCopy(firstChar, bytes, span.Length, input.Length * 2);
-                            ((char*)bytes)[input.Length] = default;
-                        }
+                        Buffer.MemoryCopy(firstChar, bytes, span.Length, input.Length * 2);
+                        ((char*)bytes)[input.Length] = default;
                     }
 
                     return input.Length + 1;
+                }
+                case NativeStringEncoding.LPWStr:
+                {
+                    int convertedBytes;
+
+                    fixed (char* firstChar = input)
+                    fixed (byte* bytes = span)
+                    {
+                        convertedBytes = Encoding.UTF32.GetBytes(firstChar, input.Length, bytes, span.Length - 4);
+                        ((uint*)bytes)[convertedBytes / 4] = 0;
+                    }
+
+                    return convertedBytes + 4;
                 }
                 default:
                 {
@@ -276,8 +286,12 @@ namespace Silk.NET.Core.Native
         /// <param name="input">The string to marshal.</param>
         /// <param name="encoding">The target native string encoding.</param>
         /// <returns>A pointer to the memory containing the marshalled string array.</returns>
-        public static nint StringToPtr(string? input, NativeStringEncoding encoding = NativeStringEncoding.Ansi)
-            => input is null ? 0 : RegisterMemory(StringToMemory(input, encoding));
+        public static unsafe nint StringToPtr(string? input, NativeStringEncoding encoding = NativeStringEncoding.Ansi)
+            => input is null ? 0 : encoding switch
+            {
+                NativeStringEncoding.WinString => (nint)new WinString(input).HString,
+                _ => RegisterMemory(StringToMemory(input, encoding))
+            };
 
         /// <summary>
         /// Reads a null-terminated string from unmanaged memory, with the given native encoding.
@@ -285,7 +299,7 @@ namespace Silk.NET.Core.Native
         /// <param name="input">A pointer to memory containing a null-terminated string.</param>
         /// <param name="encoding">The encoding of the string in memory.</param>
         /// <returns>The string read from memory.</returns>
-        public static string? PtrToString(nint input, NativeStringEncoding encoding = NativeStringEncoding.Ansi)
+        public static unsafe string? PtrToString(nint input, NativeStringEncoding encoding = NativeStringEncoding.Ansi)
         {
             if (input == 0)
             {
@@ -299,6 +313,7 @@ namespace Silk.NET.Core.Native
                 NativeStringEncoding.LPTStr => Utf8PtrToString(input),
                 NativeStringEncoding.LPUTF8Str => Utf8PtrToString(input),
                 NativeStringEncoding.LPWStr => WideToString(input),
+                NativeStringEncoding.WinString => (*(WinString*)&input).ToString(),
                 _ => ThrowInvalidEncoding<string>()
             };
 
@@ -306,7 +321,19 @@ namespace Silk.NET.Core.Native
                 => new string((char*) ptr, 0, (int) (*((uint*) ptr - 1) / sizeof(char)));
 
             static unsafe string AnsiToString(nint ptr) => new string((sbyte*) ptr);
-            static unsafe string WideToString(nint ptr) => new string((char*) ptr);
+
+            static unsafe string WideToString(nint ptr)
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    return new string((char*) ptr);
+                }
+                else
+                {
+                    var length = StringLength(ptr, NativeStringEncoding.LPWStr);
+                    return Encoding.UTF32.GetString((byte*) ptr, 4 * (int) length);
+                }
+            };
         }
 
         /// <summary>
@@ -451,7 +478,7 @@ namespace Silk.NET.Core.Native
             var ptrs = (nint*) input;
             for (var i = 0; i < numStrings; i++)
             {
-                ret[i] = PtrToString(ptrs![i]);
+                ret[i] = PtrToString(ptrs![i], encoding);
             }
 
             return ret;
@@ -507,19 +534,104 @@ namespace Silk.NET.Core.Native
             Func<nint, string> customUnmarshaller
         ) => PtrToStringArray(input, input.Length / IntPtr.Size, customUnmarshaller);
 
-        private static unsafe string Utf8PtrToString(nint ptr)
+        /// <summary>
+        /// Gets the length of the given native string.
+        /// </summary>
+        /// <param name="ptr">The native string pointer.</param>
+        /// <param name="encoding">The encoding.</param>
+        /// <returns>The length of the string.</returns>
+        /// <remarks>
+        /// Note that this returns the length in characters. Namely, if a 16-bit character encoding is used, the actual
+        /// byte count will be double the return value from this function.
+        /// </remarks>
+#if NET6_0_OR_GREATER
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe nuint StringLength
+        (
+            nint ptr,
+            NativeStringEncoding encoding = NativeStringEncoding.Ansi
+        )
         {
-            var span = new Span<byte>((void*) ptr, int.MaxValue);
-            span = span.Slice(0, span.IndexOf(default(byte)));
-            if (span.Length == 0)
+            switch (encoding)
             {
-                return string.Empty;
+                default:
+                {
+                    return (nuint)MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)ptr).Length;
+                }
+                case NativeStringEncoding.LPWStr when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
+                {
+                    return (nuint)MemoryMarshal.CreateReadOnlySpanFromNullTerminated((char*)ptr).Length;
+                }
+                case NativeStringEncoding.LPWStr:
+                {
+                    // No int overload for CreateReadOnlySpanFromNullTerminated
+                    if (ptr == 0)
+                    {
+                        return 0;
+                    }
+                
+                    nuint length = 0;
+                    while (((uint*) ptr)![length] != 0)
+                    {
+                        length++;
+                    }
+             
+                    return length;
+                }
+            }
+        }
+            
+#else
+        public static unsafe nuint StringLength(
+            nint ptr,
+            NativeStringEncoding encoding = NativeStringEncoding.Ansi
+        )
+        {
+            if (ptr == 0)
+            {
+                return 0;
             }
 
-            fixed (byte* bytes = span)
+            nuint length = 0;
+            switch (encoding)
             {
-                return Encoding.UTF8.GetString(bytes, span.Length);
+                default:
+                {
+                    while (((byte*) ptr)![length] != 0)
+                    {
+                        length++;
+                    }
+                    
+                    break;
+                }
+                case NativeStringEncoding.LPWStr when RuntimeInformation.IsOSPlatform(OSPlatform.Windows):
+                {
+                    while (((char*) ptr)![length] != 0)
+                    {
+                        length++;
+                    }
+                    
+                    break;
+                }
+                case NativeStringEncoding.LPWStr:
+                {
+                    while (((uint*) ptr)![length] != 0)
+                    {
+                        length++;
+                    }
+                    
+                    break;
+                }
             }
+            
+            return length;
+        }
+#endif
+
+        private static unsafe string Utf8PtrToString(nint ptr)
+        {
+            var len = (int)StringLength(ptr, NativeStringEncoding.UTF8);
+            return len == 0 ? string.Empty : Encoding.UTF8.GetString((byte*)ptr, len);
         }
 
         // "Unsafe" methods
