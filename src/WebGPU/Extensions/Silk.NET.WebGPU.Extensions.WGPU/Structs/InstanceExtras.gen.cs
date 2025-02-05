@@ -23,7 +23,9 @@ namespace Silk.NET.WebGPU.Extensions.WGPU
         (
             ChainedStruct? chain = null,
             Silk.NET.WebGPU.Extensions.WGPU.InstanceBackend? backends = null,
+            uint? flags = null,
             Dx12Compiler? dx12ShaderCompiler = null,
+            Gles3MinorVersion? gles3MinorVersion = null,
             byte* dxilPath = null,
             byte* dxcPath = null
         ) : this()
@@ -38,9 +40,19 @@ namespace Silk.NET.WebGPU.Extensions.WGPU
                 Backends = backends.Value;
             }
 
+            if (flags is not null)
+            {
+                Flags = flags.Value;
+            }
+
             if (dx12ShaderCompiler is not null)
             {
                 Dx12ShaderCompiler = dx12ShaderCompiler.Value;
+            }
+
+            if (gles3MinorVersion is not null)
+            {
+                Gles3MinorVersion = gles3MinorVersion.Value;
             }
 
             if (dxilPath is not null)
@@ -65,10 +77,20 @@ namespace Silk.NET.WebGPU.Extensions.WGPU
         [NativeName("Name", "backends")]
         public Silk.NET.WebGPU.Extensions.WGPU.InstanceBackend Backends;
 
+        [NativeName("Type", "WGPUInstanceFlags")]
+        [NativeName("Type.Name", "WGPUInstanceFlags")]
+        [NativeName("Name", "flags")]
+        public uint Flags;
+
         [NativeName("Type", "WGPUDx12Compiler")]
         [NativeName("Type.Name", "WGPUDx12Compiler")]
         [NativeName("Name", "dx12ShaderCompiler")]
         public Dx12Compiler Dx12ShaderCompiler;
+
+        [NativeName("Type", "WGPUGles3MinorVersion")]
+        [NativeName("Type.Name", "WGPUGles3MinorVersion")]
+        [NativeName("Name", "gles3MinorVersion")]
+        public Gles3MinorVersion Gles3MinorVersion;
 
         [NativeName("Type", "const char *")]
         [NativeName("Type.Name", "const char *")]

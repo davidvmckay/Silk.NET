@@ -1,15 +1,21 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using Silk.NET.Core;
 using Silk.NET.Core.Contexts;
 using Silk.NET.Maths;
 using Silk.NET.SDL;
 using Silk.NET.Windowing.Internals;
+#if __IOS__
+using Silk.NET.Windowing.Sdl.iOS;
+#endif
 
 // We can't import System because System has a type called nint on iOS and Mac Catalyst.
 // As such, throughout this file System is fully qualified.
@@ -149,29 +155,59 @@ namespace Silk.NET.Windowing.Sdl
             IsClosingVal = false;
 
             // Set window GL attributes
-            Sdl.GLSetAttribute(GLattr.DepthSize,
-                    opts.PreferredDepthBufferBits is null || opts.PreferredDepthBufferBits == -1
-                        ? 24 : opts.PreferredDepthBufferBits.Value);
+            if (opts.PreferredDepthBufferBits != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.DepthSize,
+                    opts.PreferredDepthBufferBits ?? 24
+                );
+            }
 
-            Sdl.GLSetAttribute(GLattr.StencilSize,
-                    opts.PreferredStencilBufferBits is null || opts.PreferredStencilBufferBits == -1
-                        ? 8 : opts.PreferredStencilBufferBits.Value);
+            if (opts.PreferredStencilBufferBits != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.StencilSize,
+                    opts.PreferredStencilBufferBits ?? 8
+                );
+            }
 
-            Sdl.GLSetAttribute(GLattr.RedSize,
-                    opts.PreferredBitDepth is null || opts.PreferredBitDepth.Value.X == -1
-                        ? 8 : opts.PreferredBitDepth.Value.X);
+            if (opts.PreferredBitDepth?.X != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.RedSize,
+                    opts.PreferredBitDepth?.X ?? 8
+                );
+            }
 
-            Sdl.GLSetAttribute(GLattr.GreenSize,
-                    opts.PreferredBitDepth is null || opts.PreferredBitDepth.Value.Y == -1
-                        ? 8 : opts.PreferredBitDepth.Value.Y);
+            if (opts.PreferredBitDepth?.Y != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.GreenSize,
+                    opts.PreferredBitDepth?.Y ?? 8
+                );
+            }
 
-            Sdl.GLSetAttribute(GLattr.BlueSize,
-                    opts.PreferredBitDepth is null || opts.PreferredBitDepth.Value.Z == -1
-                        ? 8 : opts.PreferredBitDepth.Value.Z);
-
-            Sdl.GLSetAttribute(GLattr.AlphaSize,
-                    opts.PreferredBitDepth is null || opts.PreferredBitDepth.Value.W == -1
-                        ? 8 : opts.PreferredBitDepth.Value.W);
+            if (opts.PreferredBitDepth?.Z != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.BlueSize,
+                    opts.PreferredBitDepth?.Z ?? 8
+                );
+            }
+            
+            if (opts.PreferredBitDepth?.W != -1)
+            {
+                Sdl.GLSetAttribute
+                (
+                    GLattr.AlphaSize,
+                    opts.PreferredBitDepth?.W ?? 8
+                );
+            }
 
             Sdl.GLSetAttribute(GLattr.Multisamplebuffers, (opts.Samples == null || opts.Samples == -1) ? 0 : 1);
             Sdl.GLSetAttribute(GLattr.Multisamplesamples, (opts.Samples == null || opts.Samples == -1) ? 0 : opts.Samples.Value);
@@ -233,6 +269,34 @@ namespace Silk.NET.Windowing.Sdl
             Sdl.ThrowError();
         }
 
+#if __IOS__
+        private static bool _isRunning;
+        public override void Run(Action onFrame)
+        {
+            if (_isRunning)
+            {
+                throw new NotSupportedException("A view is already running in this mobile application.");
+            }
+
+            if (!SilkMobile.IsRunning)
+            {
+                throw new InvalidOperationException
+                (
+                    "The view could not be created as the underlying mobile application is not running. On iOS, " +
+                    "please wrap your main function in a call to SilkMobile.RunApp to ensure that application " +
+                    "lifecycles can be managed properly."
+                );
+            }
+            
+            // This is not correct, we should be using SDL_iPhoneSetAnimationCallback and then letting
+            // SDL_UIKitRunApp take care of the lifetime, but this would be a breaking change as Run in 2.X is expected
+            // to only exit when the view does. We'll fix this properly in 3.0.
+            _isRunning = true;
+            base.Run(onFrame);
+            _isRunning = false;
+        }
+#endif
+
         protected override void CoreReset()
         {
             if (SdlWindow == null)
@@ -250,7 +314,6 @@ namespace Silk.NET.Windowing.Sdl
 
         public override void DoEvents()
         {
-            ClearEvents();
             do
             {
                 _platform.DoEvents();
@@ -260,23 +323,33 @@ namespace Silk.NET.Windowing.Sdl
         }
 
         private void ClearEvents()
-        {
-            var c = Events.Count;
-            for (var i = 0; i < c; i++)
+        { 
+            // remove events in reverse order to prevent shuffling in the list
+            for (var i = Events.Count - 1; i >= 0; i--)
             {
-                var @event = Events[0];
-                if (@event.Type == (uint) EventType.Dropfile)
-                {
-                    Sdl.Free(@event.Drop.File);
-                }
-
-                Events.RemoveAt(0);
+                RemoveEvent(i);
             }
+        }
+        
+        internal void RemoveEvent(int index)
+        {
+            var @event = Events[index];
+            if (@event.Type == (uint) EventType.Dropfile)
+            {
+                Sdl.Free(@event.Drop.File);
+            }
+
+            Events.RemoveAt(index);
         }
 
         ~SdlView()
         {
             Reset();
+        }
+
+        public override void Focus()
+        {
+            Sdl.RaiseWindow(SdlWindow);
         }
 
         public override void Close()
@@ -397,7 +470,7 @@ namespace Silk.NET.Windowing.Sdl
 
                 if (!skipped)
                 {
-                    Events.RemoveAt(i);
+                    RemoveEvent(i);
                 }
             }
             
@@ -431,7 +504,7 @@ namespace Silk.NET.Windowing.Sdl
                     EventType.Mousemotion when @event.Motion.WindowID == _id => true,
                     EventType.Mousebuttondown when @event.Button.WindowID == _id => true,
                     EventType.Mousebuttonup when @event.Button.WindowID == _id => true,
-                    EventType.Mousewheel when @event.Motion.WindowID == _id => true,
+                    EventType.Mousewheel when @event.Wheel.WindowID == _id => true,
                     EventType.Joyaxismotion => true,
                     EventType.Joyballmotion => true,
                     EventType.Joyhatmotion => true,
@@ -471,6 +544,11 @@ namespace Silk.NET.Windowing.Sdl
             }
             
             EndEventProcessing(taken);
+        }
+
+        internal override void AfterProcessingEvents()
+        {
+            ClearEvents();
         }
     }
 }

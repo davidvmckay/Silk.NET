@@ -11,6 +11,7 @@ using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
 using Octokit;
 using Octokit.Internal;
+using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.Tools.Git.GitTasks;
 using static Nuke.Common.Tooling.ProcessTasks;
@@ -23,7 +24,6 @@ partial class Build
     Target RegenerateBindings => CommonTarget
     (
         x => x.After(Clean)
-            .DependsOn(Restore)
             .Executes
             (
                 () =>
@@ -31,7 +31,7 @@ partial class Build
                     var project = OriginalSolution.GetProject("Silk.NET.BuildTools");
                     if (project == default)
                     {
-                        Logger.Error("Couldn't find BuildTools in the solution file.");
+                        Log.Error("Couldn't find BuildTools in the solution file.");
                         return;
                     }
 
@@ -52,14 +52,14 @@ partial class Build
                         {
                             DotNet($"sln \"{Path.GetFileName(OriginalSolution.FileName)}\" add \"{missedOut}\"");
                         }
-                        
+
                         PrUpdatedBindings();
                     }
                 }
             )
     );
-    
-    
+
+
     void PrUpdatedBindings()
     {
         var pushableToken = EnvironmentInfo.GetVariable<string>("PUSHABLE_GITHUB_TOKEN");
@@ -89,13 +89,13 @@ partial class Build
             Git("reset --hard", RootDirectory);
             if (GitCurrentCommit(RootDirectory) != curCommit) // might get "nothing to commit", you never know...
             {
-                Logger.Info("Checking for existing branch...");
+                Log.Information("Checking for existing branch...");
                 var exists = StartProcess("git", $"checkout \"{newBranch}\"", RootDirectory)
                     .AssertWaitForExit()
                     .ExitCode == 0;
                 if (!exists)
                 {
-                    Logger.Info("None found, creating a new one...");
+                    Log.Information("None found, creating a new one...");
                     Git($"checkout -b \"{newBranch}\"");
                 }
 
@@ -108,7 +108,7 @@ partial class Build
                         new ProductHeaderValue("Silk.NET-CI"),
                         new InMemoryCredentialStore(new Credentials(pushableToken))
                     );
-                    
+
                     var pr = github.PullRequest.Create
                             ("dotnet", "Silk.NET", new($"Regenerate bindings as of {DateTime.UtcNow:dd/MM/yyyy}", newBranch, curBranch))
                         .GetAwaiter()

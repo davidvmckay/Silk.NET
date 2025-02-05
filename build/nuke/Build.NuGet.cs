@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Nuke.Common;
 using Nuke.Common.Tooling;
 using Nuke.Common.Tools.DotNet;
+using Serilog;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
 
 partial class Build
@@ -23,6 +24,9 @@ partial class Build
     static IEnumerable<string> Packages => Directory.GetFiles(PackageDirectory, "*.nupkg")
         .Where(x => Path.GetFileName(x).StartsWith("Silk.NET") || Path.GetFileName(x).StartsWith("Ultz.Native"));
 
+    static IEnumerable<string> SymbolPackages => Directory.GetFiles(PackageDirectory, "*.snupkg")
+        .Where(x => Path.GetFileName(x).StartsWith("Silk.NET") || Path.GetFileName(x).StartsWith("Ultz.Native"));
+
     Target PushToNuGet => CommonTarget
     (
         x => x.DependsOn(Pack)
@@ -35,12 +39,13 @@ partial class Build
         var outputs = Enumerable.Empty<Output>();
         const int rateLimit = 300;
 
-        var allFiles = Packages.Select((x, i) => new { Index = i, Value = x })
+        var allFiles = Packages.Concat(SymbolPackages)
+            .Select((x, i) => new { Index = i, Value = x })
             .GroupBy(x => x.Index / rateLimit)
             .Select(x => x.Select(v => v.Value).ToList())
             .ToList();
         var first = true;
-        Logger.Info($"Searching for packages in \"{RootDirectory / "build" / "output_packages"}\"...");
+        Log.Information($"Searching for packages in \"{RootDirectory / "build" / "output_packages"}\"...");
         foreach (var files in allFiles)
         {
             if (first)
@@ -60,13 +65,13 @@ partial class Build
                 {
                     if (NugetUsername is null || NugetPassword is null)
                     {
-                        ControlFlow.Fail
+                        Assert.Fail
                         (
                             "Both \"NugetUsername\" and \"NugetPassword\" must be specified if either are used."
                         );
                     }
 
-                    srcSettings = srcSettings.SetUsername(NugetUsername).SetPassword(NugetPassword);
+                    srcSettings = srcSettings.SetUsername(NugetUsername).SetPassword(NugetPassword).SetStorePasswordInClearText(true);
                 }
 
                 outputs = outputs.Concat(DotNetNuGetAddSource(srcSettings));

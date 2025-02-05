@@ -32,7 +32,7 @@ namespace Silk.NET.WebGPU.Extensions.Dawn
             float* srcTransferFunctionParameters = null,
             float* dstTransferFunctionParameters = null,
             float* gamutConversionMatrix = null,
-            Silk.NET.Core.Bool32? flipY = null,
+            Silk.NET.Core.Bool32? mirrored = null,
             ExternalTextureRotation? rotation = null
         ) : this()
         {
@@ -91,9 +91,9 @@ namespace Silk.NET.WebGPU.Extensions.Dawn
                 GamutConversionMatrix = gamutConversionMatrix;
             }
 
-            if (flipY is not null)
+            if (mirrored is not null)
             {
-                FlipY = flipY.Value;
+                Mirrored = mirrored.Value;
             }
 
             if (rotation is not null)
@@ -133,8 +133,8 @@ namespace Silk.NET.WebGPU.Extensions.Dawn
         [NativeName("Name", "visibleSize")]
         public Extent2D VisibleSize;
 
-        [NativeName("Type", "bool")]
-        [NativeName("Type.Name", "bool")]
+        [NativeName("Type", "WGPUBool")]
+        [NativeName("Type.Name", "WGPUBool")]
         [NativeName("Name", "doYuvToRgbConversionOnly")]
         public Silk.NET.Core.Bool32 DoYuvToRgbConversionOnly;
 
@@ -158,10 +158,10 @@ namespace Silk.NET.WebGPU.Extensions.Dawn
         [NativeName("Name", "gamutConversionMatrix")]
         public float* GamutConversionMatrix;
 
-        [NativeName("Type", "bool")]
-        [NativeName("Type.Name", "bool")]
-        [NativeName("Name", "flipY")]
-        public Silk.NET.Core.Bool32 FlipY;
+        [NativeName("Type", "WGPUBool")]
+        [NativeName("Type.Name", "WGPUBool")]
+        [NativeName("Name", "mirrored")]
+        public Silk.NET.Core.Bool32 Mirrored;
 
         [NativeName("Type", "WGPUExternalTextureRotation")]
         [NativeName("Type.Name", "WGPUExternalTextureRotation")]

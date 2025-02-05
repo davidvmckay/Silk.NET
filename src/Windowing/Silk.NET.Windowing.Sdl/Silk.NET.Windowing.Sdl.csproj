@@ -1,13 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0;net6.0;net6.0-android;net6.0-ios;net6.0-maccatalyst</TargetFrameworks>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;netcoreapp3.1;net5.0;net6.0;net6.0-android</TargetFrameworks>
+        <TargetFrameworks Condition="!$([MSBuild]::IsOsPlatform('Linux'))">$(TargetFrameworks);net6.0-ios;net6.0-maccatalyst</TargetFrameworks>
         <LangVersion>8</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Nullable>enable</Nullable>
         <DisableImplicitNamespaceImports>true</DisableImplicitNamespaceImports>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
             <_Parameter1>Silk.NET.Input.Sdl</_Parameter1>
@@ -26,7 +27,7 @@
 
     <!-- Android Specific Files -->
     <ItemGroup Condition="'$(TargetFramework)' == 'net6.0-android'">
-        <AndroidLibrary Update="Android\app-release.aar" Bind="true" />
+        <AndroidLibrary Update="Android\app-release.aar" Bind="true" Pack="false" />
         <TransformFile Include="Android/Metadata.xml" />
         <TransformFile Include="Android/EnumFields.xml" />
         <TransformFile Include="Android/EnumMethods.xml" />
@@ -49,11 +50,6 @@
         <GetNuGetShortFolderName TargetFrameworkMoniker="$(TargetFrameworkMoniker)" TargetPlatformMoniker="$(TargetPlatformMoniker)">
             <Output TaskParameter="NuGetShortFolderName" PropertyName="_NuGetShortFolderName" />
         </GetNuGetShortFolderName>
-        <!-- iOS Specific Bundled Files -->
-        <ItemGroup Condition="'$(TargetFramework)' == 'net6.0-ios' Or '$(TargetFramework)' == 'net6.0-maccatalyst'">
-            <TfmSpecificPackageFile Include="iOS/libSDL2.a" Pack="true" Link="build/$(_NuGetShortFolderName)/libSDL2.a" PackagePath="build/$(_NuGetShortFolderName)/native/libSDL2.a" CopyToOutputDirectory="PreserveNewest" />
-            <TfmSpecificPackageFile Include="iOS/Silk.NET.Windowing.Sdl.targets" Link="build/$(_NuGetShortFolderName)/Silk.NET.Windowing.Sdl.targets" Pack="true" PackagePath="build/$(_NuGetShortFolderName)/Silk.NET.Windowing.Sdl.targets" />
-        </ItemGroup>
         <!-- Android Specific Bundled Files -->
         <ItemGroup Condition="'$(TargetFramework)' == 'net6.0-android'">
             <!-- https://github.com/xamarin/xamarin-android/issues/5957 
